@@ -100,9 +100,9 @@ function ProjectList() {
       {/* Left Sidebar */}
       <div className="w-64 bg-white border-r border-orange-100 overflow-y-auto">
         <div className="p-4">
-          <Link to="/" className="flex items-center text-2xl font-bold text-orange-500">
+          <Link to="/" className="flex items-center text-xl font-bold text-orange-500">
             <Sparkles className="h-6 w-6 mr-2" />
-            EdTech Hub
+            SHOW'N TELL
           </Link>
         </div>
 

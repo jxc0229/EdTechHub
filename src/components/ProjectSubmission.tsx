@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Image as ImageIcon } from 'lucide-react';
 
 function ProjectSubmission() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -34,10 +35,30 @@ function ProjectSubmission() {
   ];
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    
+    if (name === 'image_url') {
+      // Reset image error when URL changes
+      setImageError(false);
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const validateImageUrl = async (url: string): Promise<boolean> => {
+    if (!url) return true; // Empty URL is valid
+    
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      const contentType = response.headers.get('content-type');
+      return contentType?.startsWith('image/') || false;
+    } catch (err) {
+      console.error('Error validating image URL:', err);
+      return false;
+    }
   };
 
   const handleTopicToggle = (topic: string) => {
@@ -62,18 +83,34 @@ function ProjectSubmission() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setImageError(false);
 
     try {
-      const { error } = await supabase
+      // Validate image URL if provided
+      if (formData.image_url) {
+        const isValidImage = await validateImageUrl(formData.image_url);
+        if (!isValidImage) {
+          setImageError(true);
+          throw new Error('Invalid image URL. Please provide a direct link to an image file.');
+        }
+      }
+
+      // If no image URL provided, use a default placeholder
+      const finalFormData = {
+        ...formData,
+        image_url: formData.image_url || 'https://via.placeholder.com/800x400?text=No+Image+Provided'
+      };
+
+      const { error: supabaseError } = await supabase
         .from('projects')
-        .insert([formData]);
+        .insert([finalFormData]);
 
-      if (error) throw error;
+      if (supabaseError) throw supabaseError;
 
-      navigate('/');
+      navigate('/projects');
     } catch (err) {
       console.error('Error submitting project:', err);
-      setError('Failed to submit project. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to submit project. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -82,7 +119,7 @@ function ProjectSubmission() {
   return (
     <div className="container mx-auto px-4 py-8 max-w-2xl">
       <button
-        onClick={() => navigate('/')}
+        onClick={() => navigate('/projects')}
         className="flex items-center text-gray-600 hover:text-gray-800 mb-8"
       >
         <ArrowLeft className="w-5 h-5 mr-2" />
@@ -110,7 +147,7 @@ function ProjectSubmission() {
             required
             value={formData.name}
             onChange={handleInputChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
 
@@ -126,7 +163,7 @@ function ProjectSubmission() {
             value={formData.content}
             onChange={handleInputChange}
             rows={4}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
 
@@ -135,15 +172,45 @@ function ProjectSubmission() {
           <label htmlFor="image_url" className="block text-sm font-medium text-gray-700 mb-2">
             Image URL
           </label>
-          <input
-            type="url"
-            id="image_url"
-            name="image_url"
-            value={formData.image_url}
-            onChange={handleInputChange}
-            placeholder="https://example.com/image.jpg"
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="space-y-2">
+            <input
+              type="url"
+              id="image_url"
+              name="image_url"
+              value={formData.image_url}
+              onChange={handleInputChange}
+              placeholder="https://example.com/image.jpg"
+              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
+                imageError ? 'border-red-500' : 'border-gray-300'
+              }`}
+            />
+            {imageError && (
+              <p className="text-red-500 text-sm">
+                Invalid image URL. Please provide a direct link to an image file.
+              </p>
+            )}
+            
+            {/* Image Preview */}
+            {formData.image_url && !imageError && (
+              <div className="mt-2 relative">
+                <img
+                  src={formData.image_url}
+                  alt="Preview"
+                  className="w-full h-48 object-cover rounded-lg"
+                  onError={() => setImageError(true)}
+                />
+              </div>
+            )}
+            
+            {!formData.image_url && (
+              <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+                <ImageIcon className="w-12 h-12 mx-auto text-gray-400" />
+                <p className="mt-2 text-sm text-gray-500">
+                  No image URL provided. A default placeholder will be used.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Author Name */}
@@ -158,7 +225,7 @@ function ProjectSubmission() {
             required
             value={formData.author}
             onChange={handleInputChange}
-            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500"
           />
         </div>
 
@@ -175,7 +242,7 @@ function ProjectSubmission() {
                 onClick={() => handleTopicToggle(topic)}
                 className={`px-4 py-2 rounded-full ${
                   formData.topics.includes(topic)
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-orange-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 } transition-colors`}
               >
@@ -198,7 +265,7 @@ function ProjectSubmission() {
                 onClick={() => handleFormToggle(form)}
                 className={`px-4 py-2 rounded-full ${
                   formData.forms.includes(form)
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-orange-500 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 } transition-colors`}
               >
@@ -209,20 +276,19 @@ function ProjectSubmission() {
         </div>
 
         {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading || !formData.name || !formData.content || !formData.author || formData.topics.length === 0 || formData.forms.length === 0}
-          className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
-        >
-          {loading ? (
-            <div className="flex items-center justify-center">
-              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-              Submitting...
-            </div>
-          ) : (
-            'Submit Project'
-          )}
-        </button>
+        <div>
+          <button
+            type="submit"
+            disabled={loading}
+            className={`w-full py-3 px-4 rounded-lg text-white font-medium ${
+              loading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500'
+            }`}
+          >
+            {loading ? 'Submitting...' : 'Submit Project'}
+          </button>
+        </div>
       </form>
     </div>
   );

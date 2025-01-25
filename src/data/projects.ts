@@ -1,6 +1,6 @@
 // Define project type for better type safety
 export interface Project {
-  id: number;
+  id: string;  // Changed from number to string to match Supabase schema
   title: string;
   author: string;
   email: string;
@@ -16,7 +16,7 @@ export interface Project {
 
 export const projects: Project[] = [
   {
-    id: 1,
+    id: "77a4b492-402a-49e7-999b-82cfdb4d3c61",  // UUID format
     title: "AI Learning Assistant",
     author: "Sarah Chen",
     email: "sarah.chen@example.com",
@@ -40,7 +40,7 @@ Key Features:
 The platform uses natural language processing to provide conversational interactions and contextual help, making the learning experience more engaging and effective for students of all levels.`
   },
   {
-    id: 2,
+    id: "77a4b492-402a-49e7-999b-82cfdb4d3c62",
     title: "VR Chemistry Lab",
     author: "Michael Rodriguez",
     email: "michael.rodriguez@example.com",
@@ -64,7 +64,7 @@ Key Features:
 The VR Chemistry Lab makes advanced chemistry concepts accessible and engaging while ensuring student safety and promoting proper laboratory practices.`
   },
   {
-    id: 3,
+    id: "77a4b492-402a-49e7-999b-82cfdb4d3c63",
     title: "Gamified Math App",
     author: "Emma Wilson",
     email: "emma.wilson@example.com",
@@ -88,7 +88,7 @@ Key Features:
 The app adapts to each student's pace and learning style, ensuring that mathematics concepts are understood thoroughly while maintaining engagement through game-like elements.`
   },
   {
-    id: 4,
+    id: "77a4b492-402a-49e7-999b-82cfdb4d3c64",
     title: "Adaptive Learning Platform",
     author: "David Kim",
     email: "david.kim@example.com",
@@ -112,7 +112,7 @@ Key Features:
 The platform ensures that educational content is accessible to all students, regardless of their learning differences or disabilities.`
   },
   {
-    id: 5,
+    id: "77a4b492-402a-49e7-999b-82cfdb4d3c65",
     title: "AR Language Learning",
     author: "Lisa Thompson",
     email: "lisa.thompson@example.com",
@@ -136,7 +136,7 @@ Key Features:
 The AR Language Learning app transforms everyday surroundings into a language learning playground, making the process more engaging and effective.`
   },
   {
-    id: 6,
+    id: "77a4b492-402a-49e7-999b-82cfdb4d3c66",
     title: "Interactive Study Tools",
     author: "James Parker",
     email: "james.parker@example.com",

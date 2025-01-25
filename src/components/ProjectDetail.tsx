@@ -85,7 +85,7 @@ function ProjectDetail() {
             </Link>
             <Link to="/" className="flex items-center text-xl font-bold text-orange-500">
               <Sparkles className="h-6 w-6 mr-2" />
-              EdTech Hub
+              SHOW'N TELL
             </Link>
           </div>
         </div>
@@ -103,73 +103,96 @@ function ProjectDetail() {
         </div>
 
         {/* Project Info */}
-        <div className="bg-white rounded-lg shadow-sm p-8 border border-orange-100">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">{project.name}</h1>
-          
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-6">
-            {project.topics.map((topic) => (
-              <span
-                key={topic}
-                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800"
-              >
-                {topic}
-              </span>
-            ))}
-            {project.forms.map((form) => (
-              <span
-                key={form}
-                className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
-              >
-                {form}
-              </span>
-            ))}
-          </div>
+        <div className="bg-white rounded-lg shadow-lg p-8">
+          <div className="max-w-3xl mx-auto">
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">{project.name}</h1>
+            
+            {/* Author Info */}
+            <div className="flex items-center space-x-4 mb-6">
+              <div className="flex items-center text-gray-600">
+                <Mail className="w-4 h-4 mr-2" />
+                <span>{project.contact_email}</span>
+              </div>
+            </div>
 
-          {/* Description */}
-          <div className="prose max-w-none mb-8">
-            {project.content.split('\n\n').map((paragraph, index) => (
-              <p key={index} className="mb-4 text-gray-600">
-                {paragraph}
-              </p>
-            ))}
-          </div>
+            {/* Links */}
+            <div className="flex flex-wrap gap-4 mb-8">
+              {project.github_url && (
+                <a
+                  href={project.github_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200"
+                >
+                  <Github className="w-4 h-4 mr-2" />
+                  GitHub Repository
+                </a>
+              )}
+              {project.demo_url && (
+                <a
+                  href={project.demo_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200"
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Live Demo
+                </a>
+              )}
+              {project.contact_email && (
+                <a
+                  href={`mailto:${project.contact_email}`}
+                  className="inline-flex items-center px-4 py-2 rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200"
+                >
+                  <Mail className="w-4 h-4 mr-2" />
+                  Contact Author
+                </a>
+              )}
+            </div>
 
-          {/* Author Info */}
-          <div className="border-t border-orange-100 pt-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">About the Author</h2>
-            <div className="bg-orange-50 rounded-lg p-6">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">{project.author}</h3>
-              
-              <div className="space-y-3">
-                {project.contact_email && (
-                  <div className="flex items-center text-gray-600">
-                    <Mail className="w-5 h-5 mr-2" />
-                    <a href={`mailto:${project.contact_email}`} className="hover:text-orange-600">
-                      {project.contact_email}
-                    </a>
+            {/* Description */}
+            <div className="prose prose-orange max-w-none">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">About the Project</h2>
+              <div className="whitespace-pre-wrap text-gray-600">
+                {project.content}
+              </div>
+            </div>
+
+            {/* Tags */}
+            {(project.topics || project.forms) && (
+              <div className="mt-8 space-y-4">
+                {project.topics && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Topics</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {project.topics.map((topic) => (
+                        <span
+                          key={topic}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-orange-100 text-orange-800"
+                        >
+                          {topic}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
-                
-                {project.github_url && (
-                  <div className="flex items-center text-gray-600">
-                    <Github className="w-5 h-5 mr-2" />
-                    <a href={project.github_url} target="_blank" rel="noopener noreferrer" className="hover:text-orange-600">
-                      GitHub Repository
-                    </a>
-                  </div>
-                )}
-
-                {project.demo_url && (
-                  <div className="flex items-center text-gray-600">
-                    <ExternalLink className="w-5 h-5 mr-2" />
-                    <a href={project.demo_url} target="_blank" rel="noopener noreferrer" className="hover:text-orange-600">
-                      View Live Demo
-                    </a>
+                {project.forms && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Forms</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {project.forms.map((form) => (
+                        <span
+                          key={form}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800"
+                        >
+                          {form}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
+            )}
           </div>
         </div>
       </main>
