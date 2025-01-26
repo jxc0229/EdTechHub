@@ -42,7 +42,8 @@ function ProjectList() {
 
       let query = supabase
         .from('projects')
-        .select('*');
+        .select('*')
+        .eq('status', 'approved');  // Only fetch approved projects
 
       // Apply filters if any
       if (selectedFilter) {

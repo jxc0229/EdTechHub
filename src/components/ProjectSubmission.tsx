@@ -8,6 +8,8 @@ function ProjectSubmission() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState<number>(0);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -15,7 +17,8 @@ function ProjectSubmission() {
     image_url: '',
     author: '',
     topics: [] as string[],
-    forms: [] as string[]
+    forms: [] as string[],
+    status: 'pending' as const
   });
 
   const topics = [
@@ -79,6 +82,55 @@ function ProjectSubmission() {
     }));
   };
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setImageError(true);
+      setError('Please select a valid image file.');
+      return;
+    }
+
+    setSelectedFile(file);
+    setImageError(false);
+    setError(null);
+
+    // Create a preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setFormData(prev => ({
+      ...prev,
+      image_url: previewUrl
+    }));
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `project-images/${fileName}`;
+
+    try {
+      const { error: uploadError, data } = await supabase.storage
+        .from('project-images')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('project-images')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      throw new Error('Failed to upload image. Please try again.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -86,19 +138,16 @@ function ProjectSubmission() {
     setImageError(false);
 
     try {
-      // Validate image URL if provided
-      if (formData.image_url) {
-        const isValidImage = await validateImageUrl(formData.image_url);
-        if (!isValidImage) {
-          setImageError(true);
-          throw new Error('Invalid image URL. Please provide a direct link to an image file.');
-        }
+      let finalImageUrl = formData.image_url;
+
+      if (selectedFile) {
+        finalImageUrl = await uploadImage(selectedFile);
       }
 
-      // If no image URL provided, use a default placeholder
       const finalFormData = {
         ...formData,
-        image_url: formData.image_url || 'https://via.placeholder.com/800x400?text=No+Image+Provided'
+        image_url: finalImageUrl || 'https://via.placeholder.com/800x400?text=No+Image+Provided',
+        status: 'pending' as const
       };
 
       const { error: supabaseError } = await supabase
@@ -167,26 +216,36 @@ function ProjectSubmission() {
           />
         </div>
 
-        {/* Image URL */}
+        {/* Image Upload */}
         <div>
-          <label htmlFor="image_url" className="block text-sm font-medium text-gray-700 mb-2">
-            Image URL
+          <label htmlFor="image" className="block text-sm font-medium text-gray-700 mb-2">
+            Project Image
           </label>
           <div className="space-y-2">
-            <input
-              type="url"
-              id="image_url"
-              name="image_url"
-              value={formData.image_url}
-              onChange={handleInputChange}
-              placeholder="https://example.com/image.jpg"
-              className={`w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 ${
-                imageError ? 'border-red-500' : 'border-gray-300'
-              }`}
-            />
+            <div className="flex items-center space-x-2">
+              <label className="cursor-pointer bg-white px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-orange-500">
+                <span className="flex items-center space-x-2">
+                  <ImageIcon className="w-5 h-5" />
+                  <span>{selectedFile ? 'Change Image' : 'Upload Image'}</span>
+                </span>
+                <input
+                  type="file"
+                  id="image"
+                  name="image"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </label>
+              {selectedFile && (
+                <span className="text-sm text-gray-500">
+                  {selectedFile.name}
+                </span>
+              )}
+            </div>
             {imageError && (
               <p className="text-red-500 text-sm">
-                Invalid image URL. Please provide a direct link to an image file.
+                Please select a valid image file.
               </p>
             )}
             
@@ -199,15 +258,6 @@ function ProjectSubmission() {
                   className="w-full h-48 object-cover rounded-lg"
                   onError={() => setImageError(true)}
                 />
-              </div>
-            )}
-            
-            {!formData.image_url && (
-              <div className="mt-2 border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                <ImageIcon className="w-12 h-12 mx-auto text-gray-400" />
-                <p className="mt-2 text-sm text-gray-500">
-                  No image URL provided. A default placeholder will be used.
-                </p>
               </div>
             )}
           </div>

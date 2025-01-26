@@ -9,6 +9,8 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+export type ProjectStatus = 'pending' | 'approved' | 'rejected';
+
 // Types for your database
 export type Database = {
   public: {
@@ -17,27 +19,37 @@ export type Database = {
         Row: {
           id: string;
           created_at: string;
-          title: string;
-          description: string;
-          user_id: string;
-          // Add other columns as needed
+          name: string;
+          content: string;
+          image_url: string;
+          author: string;
+          topics: string[];
+          forms: string[];
+          status: ProjectStatus;
         };
         Insert: {
           id?: string;
           created_at?: string;
-          title: string;
-          description: string;
-          user_id: string;
+          name: string;
+          content: string;
+          image_url?: string;
+          author: string;
+          topics: string[];
+          forms: string[];
+          status?: ProjectStatus;
         };
         Update: {
           id?: string;
           created_at?: string;
-          title?: string;
-          description?: string;
-          user_id?: string;
+          name?: string;
+          content?: string;
+          image_url?: string;
+          author?: string;
+          topics?: string[];
+          forms?: string[];
+          status?: ProjectStatus;
         };
       };
-      // Add other tables as needed
     };
   };
 };

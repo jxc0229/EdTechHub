@@ -22,10 +22,15 @@ function ProjectDetail() {
           .from('projects')
           .select('*')
           .eq('id', id)
+          .eq('status', 'approved')
           .single();
 
         if (supabaseError) {
           throw supabaseError;
+        }
+
+        if (!data) {
+          throw new Error('Project not found or not approved');
         }
 
         setProject(data);
