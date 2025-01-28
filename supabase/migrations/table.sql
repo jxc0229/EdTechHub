@@ -1,39 +1,41 @@
--- Enable UUID generation
+-- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Drop existing tables if they exist
+-- Create enum for project status if it doesn't exist
+DO $$ 
+BEGIN 
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'project_status') THEN
+        CREATE TYPE project_status AS ENUM ('pending', 'approved', 'rejected');
+    END IF;
+END $$;
+
+-- Drop existing tables and recreate them
 DROP TABLE IF EXISTS project_authors CASCADE;
 DROP TABLE IF EXISTS projects CASCADE;
-DROP TABLE IF EXISTS admin_users CASCADE;
-DROP TYPE IF EXISTS project_status CASCADE;
-
--- Create enum for project status
-CREATE TYPE project_status AS ENUM ('pending', 'approved', 'rejected');
 
 -- Create the projects table
 CREATE TABLE projects (
-    -- Primary key and timestamps
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     
-    -- Required fields from ProjectSubmission
+    -- Project details
     name VARCHAR(255) NOT NULL,
-    content TEXT NOT NULL,
+    summary VARCHAR(500) NOT NULL,  -- One sentence description
+    content TEXT NOT NULL,          -- Detailed description
     image_url TEXT,
+    demo_url TEXT,                  -- Optional demo link
     
-    -- Arrays for topics and forms with validation
+    -- Categories (stored as arrays)
     topics TEXT[] NOT NULL DEFAULT '{}',
     forms TEXT[] NOT NULL DEFAULT '{}',
     audiences TEXT[] NOT NULL DEFAULT '{}',
     
-    -- Status management
+    -- Status and user reference
     status project_status NOT NULL DEFAULT 'pending',
-    
-    -- User reference (for authentication)
     user_id UUID REFERENCES auth.users(id),
     
-    -- Validate topics array contains only allowed values
+    -- Validation constraints for categories
     CONSTRAINT valid_topics CHECK (
         topics <@ ARRAY[
             'Languages',
@@ -44,8 +46,6 @@ CREATE TABLE projects (
             'Accessibility'
         ]::TEXT[]
     ),
-    
-    -- Validate forms array contains only allowed values
     CONSTRAINT valid_forms CHECK (
         forms <@ ARRAY[
             'Web App',
@@ -54,8 +54,6 @@ CREATE TABLE projects (
             'API Integration'
         ]::TEXT[]
     ),
-    
-    -- Validate audiences array contains only allowed values
     CONSTRAINT valid_audiences CHECK (
         audiences <@ ARRAY[
             'K-12 Students',
@@ -66,28 +64,24 @@ CREATE TABLE projects (
     )
 );
 
--- Create project_authors table for many-to-many relationship
+-- Create project_authors table
 CREATE TABLE project_authors (
     id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
     project_id UUID REFERENCES projects(id) ON DELETE CASCADE,
     author_name VARCHAR(255) NOT NULL,
     author_title VARCHAR(255),
-    author_email VARCHAR(255),
+    author_email VARCHAR(255) NOT NULL,
     author_institution VARCHAR(255),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
     UNIQUE(project_id, author_email)
 );
 
--- Create admin_users table
-CREATE TABLE admin_users (
-    id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-    user_id UUID REFERENCES auth.users(id) NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE(user_id)
-);
+-- Drop existing function if it exists
+DROP FUNCTION IF EXISTS update_updated_at_column CASCADE;
 
--- Create updated_at trigger
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+-- Create function to update updated_at timestamp
+CREATE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
@@ -95,128 +89,75 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Add trigger for updated_at
+-- Create triggers for updating timestamps
 CREATE TRIGGER update_projects_updated_at
     BEFORE UPDATE ON projects
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
--- Create indexes
+CREATE TRIGGER update_project_authors_updated_at
+    BEFORE UPDATE ON project_authors
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Drop existing indexes
+DROP INDEX IF EXISTS idx_projects_status;
+DROP INDEX IF EXISTS idx_projects_user_id;
+DROP INDEX IF EXISTS idx_projects_created_at;
+DROP INDEX IF EXISTS idx_projects_topics;
+DROP INDEX IF EXISTS idx_projects_forms;
+DROP INDEX IF EXISTS idx_projects_audiences;
+DROP INDEX IF EXISTS idx_project_authors_project_id;
+DROP INDEX IF EXISTS idx_project_authors_email;
+
+-- Create indexes for better query performance
 CREATE INDEX idx_projects_status ON projects(status);
 CREATE INDEX idx_projects_user_id ON projects(user_id);
 CREATE INDEX idx_projects_created_at ON projects(created_at);
+CREATE INDEX idx_projects_topics ON projects USING GIN (topics);
+CREATE INDEX idx_projects_forms ON projects USING GIN (forms);
 CREATE INDEX idx_projects_audiences ON projects USING GIN (audiences);
 CREATE INDEX idx_project_authors_project_id ON project_authors(project_id);
 CREATE INDEX idx_project_authors_email ON project_authors(author_email);
 
--- Enable RLS
+-- Enable Row Level Security
 ALTER TABLE projects ENABLE ROW LEVEL SECURITY;
 ALTER TABLE project_authors ENABLE ROW LEVEL SECURITY;
 
--- RLS Policies for projects
-CREATE POLICY "View approved projects"
-    ON projects FOR SELECT
-    USING (status = 'approved');
+-- Drop existing policies
+DROP POLICY IF EXISTS "Enable read access for all users" ON projects;
+DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON projects;
+DROP POLICY IF EXISTS "Enable update for project owners" ON projects;
+DROP POLICY IF EXISTS "Enable delete for project owners" ON projects;
+DROP POLICY IF EXISTS "Enable read access for all users" ON project_authors;
+DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON project_authors;
+DROP POLICY IF EXISTS "Enable update for project owners" ON project_authors;
 
-CREATE POLICY "View own projects"
-    ON projects FOR SELECT
-    USING (auth.uid() = user_id);
+-- Create policies for projects table
+CREATE POLICY "Enable read access for all users" ON projects
+    FOR SELECT USING (true);
 
-CREATE POLICY "Create projects"
-    ON projects FOR INSERT
-    WITH CHECK (auth.role() = 'authenticated');
+CREATE POLICY "Enable insert for authenticated users only" ON projects
+    FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
-CREATE POLICY "Update own projects"
-    ON projects FOR UPDATE
-    USING (auth.uid() = user_id);
+CREATE POLICY "Enable update for project owners" ON projects
+    FOR UPDATE USING (auth.uid() = user_id);
 
-CREATE POLICY "Admin full access"
-    ON projects
-    AS PERMISSIVE
-    FOR ALL
-    TO authenticated
-    USING (
-        EXISTS (
-            SELECT 1 FROM admin_users
-            WHERE user_id = auth.uid()
-        )
-    );
+CREATE POLICY "Enable delete for project owners" ON projects
+    FOR DELETE USING (auth.uid() = user_id);
 
--- RLS Policies for project_authors
-CREATE POLICY "View project authors"
-    ON project_authors FOR SELECT
-    USING (
-        EXISTS (
-            SELECT 1 FROM projects
-            WHERE projects.id = project_authors.project_id
-            AND (projects.status = 'approved' OR projects.user_id = auth.uid())
-        )
-    );
+-- Create policies for project_authors table
+CREATE POLICY "Enable read access for all users" ON project_authors
+    FOR SELECT USING (true);
 
-CREATE POLICY "Create project authors"
-    ON project_authors FOR INSERT
-    WITH CHECK (
-        EXISTS (
-            SELECT 1 FROM projects
-            WHERE projects.id = project_authors.project_id
-            AND (projects.user_id = auth.uid())
-        )
-    );
+CREATE POLICY "Enable insert for authenticated users only" ON project_authors
+    FOR INSERT WITH CHECK (EXISTS (
+        SELECT 1 FROM projects
+        WHERE id = project_id AND auth.uid() = user_id
+    ));
 
-CREATE POLICY "Update project authors"
-    ON project_authors FOR UPDATE
-    USING (
-        EXISTS (
-            SELECT 1 FROM projects
-            WHERE projects.id = project_authors.project_id
-            AND projects.user_id = auth.uid()
-        )
-    );
-
-CREATE POLICY "Admin full access to authors"
-    ON project_authors
-    AS PERMISSIVE
-    FOR ALL
-    TO authenticated
-    USING (
-        EXISTS (
-            SELECT 1 FROM admin_users
-            WHERE user_id = auth.uid()
-        )
-    );
-
--- Set up storage for project images (only if it doesn't exist)
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM storage.buckets WHERE id = 'project-images'
-    ) THEN
-        INSERT INTO storage.buckets (id, name, public) 
-        VALUES ('project-images', 'project-images', true);
-    END IF;
-END
-$$;
-
--- Storage policies
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies WHERE policyname = 'Public Access'
-    ) THEN
-        CREATE POLICY "Public Access"
-            ON storage.objects FOR SELECT
-            USING (bucket_id = 'project-images');
-    END IF;
-
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies WHERE policyname = 'Authenticated uploads'
-    ) THEN
-        CREATE POLICY "Authenticated uploads"
-            ON storage.objects FOR INSERT
-            WITH CHECK (
-                bucket_id = 'project-images' 
-                AND auth.role() = 'authenticated'
-            );
-    END IF;
-END
-$$;
+CREATE POLICY "Enable update for project owners" ON project_authors
+    FOR UPDATE USING (EXISTS (
+        SELECT 1 FROM projects
+        WHERE id = project_id AND auth.uid() = user_id
+    ));

@@ -1,72 +1,50 @@
 -- Insert sample projects
 INSERT INTO projects (
-    id,  -- Explicitly specify IDs for linking authors
+    id,
     name,
+    summary,
     content,
     image_url,
+    demo_url,
     topics,
     forms,
     audiences,
     status
 ) VALUES
     (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-        'Interactive Python Learning Platform',
-        'A web-based platform that teaches Python programming through interactive exercises and real-time feedback. Features include code visualization, step-by-step debugging, and automated assessment.',
-        'https://images.unsplash.com/photo-1461749280684-dccba630e2f6',
-        ARRAY['Coding', 'Languages'],
-        ARRAY['Web App', 'API Integration'],
-        ARRAY['College Students', 'K-12 Students'],
-        'approved'
-    ),
-    (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12',
-        'Historical Events AR Experience',
-        'An augmented reality application that brings historical events to life in the classroom. Students can interact with 3D models and experience historical moments through their mobile devices.',
-        'https://images.unsplash.com/photo-1599507593499-a3f7d7d97667',
-        ARRAY['History', 'STEM'],
-        ARRAY['Mobile App', 'Physical Device'],
+        'c2d6c6d0-9b3a-4f1c-8b3a-9f1c8b3a9f1c',
+        'CodeCraft: Interactive Programming for Kids',
+        'A block-based coding platform designed specifically for elementary school students to learn programming concepts through interactive games.',
+        E'CodeCraft is an innovative educational platform that makes learning to code fun and accessible for elementary school students. Using a drag-and-drop interface inspired by Scratch, students can create their own games, animations, and interactive stories.\n\nKey Features:\n- Visual block-based programming interface\n- Built-in tutorial system with progressive challenges\n- Real-time preview of code execution\n- Sharing platform for student projects\n- Teacher dashboard for progress monitoring\n\nThe platform focuses on fundamental programming concepts like sequences, loops, and conditionals, while maintaining an engaging and colorful interface that appeals to young learners. Students can start with simple projects and gradually advance to more complex programming concepts.\n\nTeachers can track student progress, assign specific challenges, and provide feedback directly through the platform. The built-in sharing feature allows students to learn from each other and showcase their creativity.',
+        'https://example.com/codecraft-preview.jpg',
+        'https://demo.codecraft.edu',
+        ARRAY['Coding', 'STEM'],
+        ARRAY['Web App'],
         ARRAY['K-12 Students', 'K-12 Educators'],
         'approved'
     ),
     (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13',
-        'STEM Lab Kit for Remote Learning',
-        'A physical kit containing sensors and electronic components that integrate with a web platform, allowing students to conduct science experiments from home while collecting and analyzing data digitally.',
-        'https://images.unsplash.com/photo-1532094349884-543bc11b234d',
-        ARRAY['STEM', 'Coding'],
-        ARRAY['Physical Device', 'Web App', 'API Integration'],
-        ARRAY['K-12 Students', 'K-12 Educators', 'College Students'],
+        'd3e7d7e1-0c4b-5f2d-9c4b-6f2d9c4b6f2d',
+        'LanguageLab VR',
+        'Virtual reality language learning environment that immerses students in realistic scenarios for practicing conversation skills.',
+        E'LanguageLab VR revolutionizes language learning by creating immersive virtual environments where students can practice their language skills in realistic scenarios. Using VR technology, students can explore virtual cities, markets, and other locations while engaging in natural conversations with AI-powered characters.\n\nFeatures:\n- Multiple language support (Spanish, French, Mandarin)\n- AI-powered conversation partners\n- Cultural immersion experiences\n- Progressive difficulty levels\n- Speech recognition for pronunciation feedback\n\nThe platform adapts to each student''s proficiency level, providing appropriate vocabulary and grammar challenges. Teachers can create custom scenarios and track student progress through detailed analytics.\n\nThe VR environment helps reduce anxiety about speaking a new language by providing a safe, judgment-free space for practice. Students can repeat scenarios as many times as needed and receive instant feedback on their pronunciation and grammar.',
+        'https://example.com/languagelab-preview.jpg',
+        'https://languagelab-vr.edu/demo',
+        ARRAY['Languages'],
+        ARRAY['Physical Device', 'Mobile App'],
+        ARRAY['College Students', 'K-12 Students'],
         'approved'
     ),
     (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14',
-        'Adaptive Writing Assistant',
-        'An AI-powered writing tool that provides personalized feedback and suggestions for improving academic writing. Includes features for different citation styles and academic disciplines.',
-        'https://images.unsplash.com/photo-1455390582262-044cdead277a',
-        ARRAY['Writing', 'Accessibility'],
-        ARRAY['Web App', 'API Integration'],
-        ARRAY['College Students', 'University Professors'],
-        'approved'
-    ),
-    (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15',
-        'Language Learning Through Stories',
-        'An immersive platform that teaches languages through interactive storytelling, combining natural language processing with engaging narratives and cultural context.',
-        'https://images.unsplash.com/photo-1457369804613-52c61a468e7d',
-        ARRAY['Languages', 'Writing'],
-        ARRAY['Mobile App', 'Web App'],
-        ARRAY['K-12 Students', 'College Students'],
-        'approved'
-    ),
-    (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16',
-        'Universal Design Learning Platform',
-        'A comprehensive learning management system designed with accessibility in mind, featuring multiple ways of presenting content and engaging with materials to accommodate different learning styles and needs.',
-        'https://images.unsplash.com/photo-1488190211105-8b0e65b80b4e',
-        ARRAY['Accessibility', 'STEM', 'Writing'],
-        ARRAY['Web App', 'API Integration'],
-        ARRAY['K-12 Educators', 'University Professors'],
+        'e4f8e8f2-1d5c-6f3e-0d5c-7f3e0d5c7f3e',
+        'HistoryXplorer',
+        'An augmented reality app that brings historical events to life through interactive 3D models and storytelling.',
+        E'HistoryXplorer transforms history education by bringing historical events and artifacts directly into the classroom through augmented reality. Students can examine 3D models of historical artifacts, explore ancient cities, and witness key historical events through immersive AR experiences.\n\nKey Features:\n- High-quality 3D models of historical artifacts\n- Interactive timelines\n- Virtual museum tours\n- Collaborative exploration modes\n- Integration with standard history curricula\n\nThe app includes detailed historical information, primary sources, and interactive quizzes to reinforce learning. Teachers can create custom tours and assignments, highlighting specific historical periods or themes.\n\nThe AR technology allows students to walk around historical scenes, examine artifacts from all angles, and interact with historical figures through animated presentations. This hands-on approach makes history more engaging and memorable for students.',
+        'https://example.com/historyxplorer-preview.jpg',
+        'https://historyxplorer.edu/demo',
+        ARRAY['History'],
+        ARRAY['Mobile App'],
+        ARRAY['K-12 Students', 'K-12 Educators'],
         'approved'
     );
 
@@ -79,79 +57,44 @@ INSERT INTO project_authors (
     author_institution
 ) VALUES
     (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-        'Prof. Sarah Chen',
-        'Associate Professor of Computer Science',
+        'c2d6c6d0-9b3a-4f1c-8b3a-9f1c8b3a9f1c',
+        'Dr. Sarah Chen',
+        'Computer Science Professor',
         'sarah.chen@university.edu',
         'Tech University'
     ),
     (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11',
-        'Dr. Michael Lee',
-        'Senior Lecturer',
-        'michael.lee@university.edu',
-        'Tech University'
+        'c2d6c6d0-9b3a-4f1c-8b3a-9f1c8b3a9f1c',
+        'Michael Rodriguez',
+        'K-12 Education Specialist',
+        'mrodriguez@school.edu',
+        'Valley Elementary School'
     ),
     (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12',
-        'Dr. James Thompson',
-        'Professor of History',
-        'james.thompson@college.edu',
-        'History College'
+        'd3e7d7e1-0c4b-5f2d-9c4b-6f2d9c4b6f2d',
+        'Dr. Emma Thompson',
+        'Language Department Chair',
+        'emma.thompson@college.edu',
+        'State University'
     ),
     (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12',
-        'Dr. Emily White',
-        'AR/VR Research Lead',
-        'emily.white@college.edu',
-        'History College'
+        'd3e7d7e1-0c4b-5f2d-9c4b-6f2d9c4b6f2d',
+        'James Wilson',
+        'VR Technology Lead',
+        'jwilson@techlab.com',
+        'Educational Technology Lab'
     ),
     (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13',
-        'Dr. Maria Rodriguez',
-        'STEM Education Director',
-        'maria.rodriguez@institute.edu',
-        'STEM Institute'
+        'e4f8e8f2-1d5c-6f3e-0d5c-7f3e0d5c7f3e',
+        'Dr. Robert Kim',
+        'History Professor',
+        'rkim@university.edu',
+        'Heritage University'
     ),
     (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13',
-        'Prof. David Kim',
-        'Professor of Engineering',
-        'david.kim@institute.edu',
-        'STEM Institute'
-    ),
-    (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14',
-        'Prof. Michael Chang',
-        'Professor of English',
-        'michael.chang@university.edu',
-        'Language University'
-    ),
-    (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15',
-        'Dr. Emma Wilson',
-        'Language Department Head',
-        'emma.wilson@academy.edu',
-        'Language Academy'
-    ),
-    (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15',
-        'Dr. Sofia Garcia',
-        'Applied Linguistics Researcher',
-        'sofia.garcia@academy.edu',
-        'Language Academy'
-    ),
-    (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16',
-        'Dr. Robert Martinez',
-        'Accessibility Research Director',
-        'robert.martinez@edu.org',
-        'Education Research Center'
-    ),
-    (
-        'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16',
-        'Dr. Lisa Johnson',
-        'Universal Design Specialist',
-        'lisa.johnson@edu.org',
-        'Education Research Center'
+        'e4f8e8f2-1d5c-6f3e-0d5c-7f3e0d5c7f3e',
+        'Lisa Martinez',
+        'Educational Content Developer',
+        'lmartinez@edutech.com',
+        'EduTech Solutions'
     );

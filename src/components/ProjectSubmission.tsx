@@ -20,7 +20,9 @@ function ProjectSubmission() {
 
   const [formData, setFormData] = useState({
     name: '',
+    summary: '',
     content: '',
+    demo_url: '',
     image_url: '',
     topics: [] as string[],
     forms: [] as string[],
@@ -128,7 +130,7 @@ function ProjectSubmission() {
       setLoading(true);
       setError(null);
 
-      if (!formData.name || !formData.content || authors.some(author => !author.author_name || !author.author_email)) {
+      if (!formData.name || !formData.summary || !formData.content || authors.some(author => !author.author_name || !author.author_email)) {
         throw new Error('Please fill in all required fields');
       }
 
@@ -223,17 +225,57 @@ function ProjectSubmission() {
               </div>
 
               <div>
+                <label htmlFor="summary" className="block text-sm font-medium text-gray-700">
+                  One-Sentence Description *
+                  <span className="text-gray-500 text-xs ml-2">
+                    (A brief summary that will appear on the projects page)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  id="summary"
+                  name="summary"
+                  value={formData.summary}
+                  onChange={handleInputChange}
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm px-3 py-2"
+                  required
+                  maxLength={200}
+                />
+              </div>
+
+              <div>
                 <label htmlFor="content" className="block text-sm font-medium text-gray-700">
-                  Project Description *
+                  Detailed Description *
+                  <span className="text-gray-500 text-xs ml-2">
+                    (A comprehensive description that will appear on the project's detail page)
+                  </span>
                 </label>
                 <textarea
                   id="content"
                   name="content"
-                  rows={4}
+                  rows={6}
                   value={formData.content}
                   onChange={handleInputChange}
                   className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm px-3 py-2"
                   required
+                />
+              </div>
+
+              <div>
+                <label htmlFor="demo_url" className="block text-sm font-medium text-gray-700">
+                  Demo URL
+                  <span className="text-gray-500 text-xs ml-2">
+                    (Optional: Link to a live demo or video of your project)
+                  </span>
+                </label>
+                <input
+                  type="url"
+                  id="demo_url"
+                  name="demo_url"
+                  value={formData.demo_url}
+                  onChange={handleInputChange}
+                  placeholder="https://"
+                  className="mt-1 block w-full rounded-md border border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500 sm:text-sm px-3 py-2"
                 />
               </div>
             </div>

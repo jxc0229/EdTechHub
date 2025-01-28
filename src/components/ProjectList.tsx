@@ -13,8 +13,18 @@ type Author = {
   created_at: string;
 };
 
-type Project = Database['public']['tables']['projects']['Row'] & {
-  authors: Author[];
+type Project = {
+  id: string;
+  name: string;
+  summary: string;
+  content: string;
+  image_url: string;
+  demo_url?: string;
+  topics: string[];
+  forms: string[];
+  audiences: string[];
+  status: 'pending' | 'approved' | 'rejected';
+  authors?: Author[];
 };
 
 function ProjectList() {
@@ -214,13 +224,13 @@ function ProjectList() {
               </h1>
             </div>
             <div className="flex items-center space-x-4">
-              <button
-                onClick={handleSubmitProject}
+              <Link
+                to="/submit"
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-orange-500 hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500"
               >
                 <Send className="w-4 h-4 mr-2" />
                 Submit Project
-              </button>
+              </Link>
             </div>
           </div>
           <div className="px-6 py-4">
@@ -268,8 +278,8 @@ function ProjectList() {
                     <h2 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors duration-200">
                       {project.name}
                     </h2>
-                    <p className="text-gray-600 mb-4 line-clamp-3">
-                      {project.content}
+                    <p className="text-gray-600 mb-4 line-clamp-2">
+                      {project.summary}
                     </p>
 
                     {/* Authors */}
@@ -280,15 +290,37 @@ function ProjectList() {
                     </div>
 
                     {/* Tags */}
-                    <div className="flex flex-wrap gap-2">
-                      {project.topics.map((topic) => (
-                        <span
-                          key={topic}
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
-                        >
-                          {topic}
-                        </span>
-                      ))}
+                    <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {project.topics.map((topic) => (
+                          <span
+                            key={topic}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                          >
+                            {topic}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {project.forms.map((form) => (
+                          <span
+                            key={form}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                          >
+                            {form}
+                          </span>
+                        ))}
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        {project.audiences.map((audience) => (
+                          <span
+                            key={audience}
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                          >
+                            {audience}
+                          </span>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </Link>
