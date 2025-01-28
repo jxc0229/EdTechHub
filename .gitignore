@@ -26,5 +26,5 @@ dist-ssr
 .env.*
 
 # Supabase
-.supabase/
+.supabase/*
 src/lib/supabase.ts

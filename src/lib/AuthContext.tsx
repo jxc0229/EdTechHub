@@ -14,40 +14,84 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
+    let mounted = true;
+
     // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setIsLoading(false);
-    });
+    const initializeAuth = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mounted) {
+          setUser(session?.user ?? null);
+          setIsLoading(false);
+          setAuthInitialized(true);
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+        if (mounted) {
+          setIsLoading(false);
+          setAuthInitialized(true);
+        }
+      }
+    };
+
+    initializeAuth();
 
     // Listen for changes on auth state
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setIsLoading(false);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (mounted) {
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async () => {
-    await supabase.auth.signInWithOAuth({
-      provider: 'azure',
-      options: {
-        scopes: 'email',
-        queryParams: {
-          domain_hint: 'stanford.edu',
-          // Force login with Stanford account
-          prompt: 'login'
+    setIsLoading(true);
+    try {
+      await supabase.auth.signInWithOAuth({
+        provider: 'azure',
+        options: {
+          scopes: 'email',
+          queryParams: {
+            domain_hint: 'stanford.edu',
+            prompt: 'login'
+          }
         }
-      }
-    });
+      });
+    } catch (error) {
+      console.error('Error signing in:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    setIsLoading(true);
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  // Don't render anything until auth is initialized
+  if (!authInitialized) {
+    return (
+      <div className="min-h-screen bg-orange-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={{ user, isLoading, signIn, signOut }}>

@@ -4,30 +4,55 @@ import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import type { Database } from '../lib/supabase';
 
-type Project = Database['public']['tables']['projects']['Row'];
+type Author = {
+  id: string;
+  author_name: string;
+  author_title: string;
+  author_email: string;
+  author_institution: string;
+  created_at: string;
+};
+
+type Project = Database['public']['tables']['projects']['Row'] & {
+  authors: Author[];
+};
 
 function ProjectList() {
   const navigate = useNavigate();
-  const [selectedFilter, setSelectedFilter] = useState<{ category: string; value: string } | null>(null);
+  const [selectedFilters, setSelectedFilters] = useState<{
+    Audience: string[];
+    Topics: string[];
+    Form: string[];
+  }>({
+    Audience: [],
+    Topics: [],
+    Form: []
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const topics = {
-    'Topic': [
-      'AI',
-      'VR/AR',
-      'Gamification',
-      'LMS',
-      'E-Learning',
-      'Learning Difference',
-      'Assistive Technology'
+    'Audience': [
+      'K-12 Students',
+      'K-12 Educators',
+      'College Students',
+      'University Professors'
+    ],
+    'Topics': [
+      'Languages',
+      'Coding',
+      'STEM',
+      'Writing',
+      'History',
+      'Accessibility'
     ],
     'Form': [
-      'Mobile',
-      'Web APP',
-      'Physical'
+      'Web App',
+      'Mobile App',
+      'Physical Device',
+      'API Integration'
     ]
   };
 
@@ -42,17 +67,28 @@ function ProjectList() {
 
       let query = supabase
         .from('projects')
-        .select('*')
+        .select(`
+          *,
+          authors:project_authors(
+            id,
+            author_name,
+            author_title,
+            author_email,
+            author_institution,
+            created_at
+          )
+        `)
         .eq('status', 'approved');  // Only fetch approved projects
 
-      // Apply filters if any
-      if (selectedFilter) {
-        const { category, value } = selectedFilter;
-        if (category === 'Topic') {
-          query = query.contains('topics', [value]);
-        } else if (category === 'Form') {
-          query = query.contains('forms', [value]);
-        }
+      // Apply filters if any are selected
+      if (selectedFilters.Topics.length > 0) {
+        query = query.contains('topics', selectedFilters.Topics);
+      }
+      if (selectedFilters.Form.length > 0) {
+        query = query.contains('forms', selectedFilters.Form);
+      }
+      if (selectedFilters.Audience.length > 0) {
+        query = query.contains('audiences', selectedFilters.Audience);
       }
 
       // Apply search if any
@@ -78,22 +114,32 @@ function ProjectList() {
   // Refetch when filters or search change
   useEffect(() => {
     fetchProjects();
-  }, [selectedFilter, searchQuery]);
+  }, [selectedFilters, searchQuery]);
 
   const handleSubmitProject = () => {
     navigate('/submit');
   };
 
-  const handleTopicClick = (category: string, value: string) => {
-    if (selectedFilter?.category === category && selectedFilter.value === value) {
-      setSelectedFilter(null);
-    } else {
-      setSelectedFilter({ category, value });
-    }
+  const handleTagClick = (category: keyof typeof selectedFilters, value: string) => {
+    setSelectedFilters(prev => {
+      const currentTags = prev[category];
+      const newTags = currentTags.includes(value)
+        ? currentTags.filter(tag => tag !== value)
+        : [...currentTags, value];
+      
+      return {
+        ...prev,
+        [category]: newTags
+      };
+    });
   };
 
   const clearFilters = () => {
-    setSelectedFilter(null);
+    setSelectedFilters({
+      Audience: [],
+      Topics: [],
+      Form: []
+    });
   };
 
   return (
@@ -108,39 +154,39 @@ function ProjectList() {
         </div>
 
         <nav className="mt-4">
-          {/* All Projects Category */}
+          {/* Clear Filters Button */}
           <div className="mb-8 border-b border-orange-100 pb-4">
             <button
               onClick={clearFilters}
               className={`w-full flex items-center px-4 py-3 text-base font-semibold transition-colors duration-150 rounded-md ${
-                !selectedFilter
+                Object.values(selectedFilters).every(arr => arr.length === 0)
                   ? 'bg-orange-100 text-orange-700'
                   : 'text-gray-700 hover:bg-orange-50 hover:text-orange-600'
               }`}
             >
               <Layout className="w-5 h-5 mr-2" />
-              All Projects
+              Clear All Filters
             </button>
           </div>
 
-          {/* Other Categories */}
-          {Object.entries(topics).map(([category, subtopics]) => (
+          {/* Filter Categories */}
+          {Object.entries(topics).map(([category, values]) => (
             <div key={category} className="mb-8">
               <h2 className="px-4 text-base font-bold text-gray-900 uppercase tracking-wider mb-3">
                 {category}
               </h2>
               <div className="space-y-1">
-                {subtopics.map((topic) => (
+                {values.map((value) => (
                   <button
-                    key={topic}
-                    onClick={() => handleTopicClick(category, topic)}
+                    key={value}
+                    onClick={() => handleTagClick(category as keyof typeof selectedFilters, value)}
                     className={`w-full text-left px-4 py-2 text-sm transition-colors duration-150 ${
-                      selectedFilter?.category === category && selectedFilter.value === topic
+                      selectedFilters[category as keyof typeof selectedFilters].includes(value)
                         ? 'bg-orange-100 text-orange-700'
                         : 'text-gray-700 hover:bg-orange-50 hover:text-orange-600'
                     }`}
                   >
-                    {topic}
+                    {value}
                   </button>
                 ))}
               </div>
@@ -154,12 +200,17 @@ function ProjectList() {
         {/* Header */}
         <header className="bg-white border-b border-orange-100">
           <div className="flex items-center justify-between px-6 py-4">
-            <div className="flex-1 flex items-center">
+            <div className="flex-1">
               <h1 className="text-2xl font-bold text-gray-900">
-                {selectedFilter 
-                  ? `${selectedFilter.category}: ${selectedFilter.value}`
-                  : 'All Projects'
-                }
+                Projects
+                {Object.entries(selectedFilters).map(([category, values]) => (
+                  values.length > 0 && (
+                    <div key={category} className="mt-2 text-sm font-normal">
+                      <span className="text-gray-600">{category}: </span>
+                      {values.join(', ')}
+                    </div>
+                  )
+                ))}
               </h1>
             </div>
             <div className="flex items-center space-x-4">
@@ -189,82 +240,62 @@ function ProjectList() {
         </header>
 
         {/* Project Grid */}
-        <div className="p-6">
-          {error && (
-            <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-8">
-              {error}
-            </div>
-          )}
-
+        <main className="p-6">
           {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto"></div>
-              <p className="mt-4 text-gray-600">Loading projects...</p>
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
             </div>
+          ) : error ? (
+            <div className="text-center text-red-600">{error}</div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {projects.map((project) => (
-                <div 
-                  key={project.id} 
-                  className="bg-white rounded-lg shadow-sm border border-orange-100 overflow-hidden cursor-pointer hover:shadow-md transition-shadow duration-200"
-                  onClick={() => navigate(`/project/${project.id}`)}
+                <Link
+                  key={project.id}
+                  to={`/projects/${project.id}`}
+                  className="group bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-all duration-200 hover:-translate-y-1"
                 >
-                  {/* Project Image */}
-                  <div className="relative h-48 overflow-hidden">
-                    <img
-                      src={project.image_url || 'https://via.placeholder.com/400x300'}
-                      alt={project.name}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-
-                  <div className="p-6">
-                    {/* Title and Author */}
-                    <div className="mb-4">
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">{project.name}</h3>
-                      <div className="flex items-center text-gray-600">
-                        <User className="w-4 h-4 mr-2" />
-                        <span className="text-sm">{project.author}</span>
-                        <span className="mx-2">•</span>
-                        <Calendar className="w-4 h-4 mr-2" />
-                        <span className="text-sm">{new Date(project.created_at).toLocaleDateString()}</span>
-                      </div>
+                  {project.image_url && (
+                    <div className="aspect-w-16 aspect-h-9">
+                      <img
+                        src={project.image_url}
+                        alt={project.name}
+                        className="object-cover w-full h-48 group-hover:scale-105 transition-transform duration-200"
+                      />
                     </div>
-
-                    {/* Description */}
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                  )}
+                  <div className="p-6">
+                    <h2 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-orange-600 transition-colors duration-200">
+                      {project.name}
+                    </h2>
+                    <p className="text-gray-600 mb-4 line-clamp-3">
                       {project.content}
                     </p>
 
+                    {/* Authors */}
+                    <div className="mb-4">
+                      <p className="text-sm text-gray-500">
+                        By: {project.authors?.map(author => author.author_name).join(', ')}
+                      </p>
+                    </div>
+
                     {/* Tags */}
-                    <div className="space-y-2">
-                      <div className="flex flex-wrap gap-2">
-                        {project.topics.map((topic) => (
-                          <span
-                            key={topic}
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
-                          >
-                            {topic}
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        {project.forms.map((form) => (
-                          <span
-                            key={form}
-                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                          >
-                            {form}
-                          </span>
-                        ))}
-                      </div>
+                    <div className="flex flex-wrap gap-2">
+                      {project.topics.map((topic) => (
+                        <span
+                          key={topic}
+                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800"
+                        >
+                          {topic}
+                        </span>
+                      ))}
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
-        </div>
+        </main>
       </div>
     </div>
   );

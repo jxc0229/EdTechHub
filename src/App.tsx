@@ -7,7 +7,7 @@ import ProjectSubmission from './components/ProjectSubmission';
 import AdminDashboard from './components/AdminDashboard';
 import AdminLogin from './components/AdminLogin';
 import ProtectedRoute from './components/ProtectedRoute';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider } from './lib/AuthContext';
 
 function App() {
   return (
